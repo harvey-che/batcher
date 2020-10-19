@@ -88,6 +88,8 @@ class ResNet50Servicer(resnet50_pb2_grpc.ResNet50Servicer):
 
 if __name__ == "__main__":
 
+    port = int(sys.argv[1])
+
     max_workers = 200
     name_prefix = 'czh_server'
     thread_pool = futures.ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix=name_prefix)
@@ -99,11 +101,11 @@ if __name__ == "__main__":
     server = grpc.server(thread_pool, options = options)
 
     
-    resnet50_pb2_grpc.add_ResNet50Servicer_to_server(ResNet50Servicer(4, '', max_workers, 8, 100000, threads_names), server)
+    resnet50_pb2_grpc.add_ResNet50Servicer_to_server(ResNet50Servicer(2, '', max_workers, 8, 100000, threads_names), server)
 
-    server.add_insecure_port('[::]:' + str(24356))
+    server.add_insecure_port('[::]:' + str(port))
     server.start()
 
-    print('ResNet50 started serving on port %d.' % 24356)
+    print('ResNet50 started serving on port %d.' % port)
     server.wait_for_termination()
     print('ResNet50 stopped.')
