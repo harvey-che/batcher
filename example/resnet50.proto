@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+message ReqResNet50 {
+    string rid = 1;
+    repeated string b64_imgs = 2;
+}
+
+message RespResNet50 {
+    string rid = 1;
+    repeated int32 preds = 2;
+}
+
+service ResNet50 {
+
+    rpc WhatItIs(ReqResNet50) returns (RespResNet50) {}
+    
+}
