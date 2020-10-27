@@ -29,18 +29,16 @@ def dec_resize_pad_scale(b64_img):
 class ResNet50Server(Batcher):
 
     def __init__(self,model_path, queue_size, batch_size, timeout):
-        # print('ResNet50 server initializing in ', threading.current_thread().name)
         super().__init__(queue_size, batch_size, timeout)
 
         # Warning: Some frameworks can't do inference in one thread while initialized in the other thread
-        
         return
 
     def model_init(self):
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = False  # dynamically grow the memory used on the GPU
         config.gpu_options.visible_device_list='0'
-        config.gpu_options.per_process_gpu_memory_fraction = 0.24
+        config.gpu_options.per_process_gpu_memory_fraction = 0.45
         config.allow_soft_placement = False
         sess = tf.Session(config=config)
         tf.keras.backend.set_session(sess)
@@ -50,18 +48,9 @@ class ResNet50Server(Batcher):
     def inference(self,batch_input):
         #TODO Do inference here
 
-        # res_array = [input + ', %d, happy?' % idx for idx, input in enumerate(batch_input)]
-        
-        t0 = time.time()
         img_array = [dec_resize_pad_scale(b64_img) for b64_img in batch_input]
-        # print('ResNet50 preprocessing in %s costs %s' %(threading.current_thread().name, str(time.time() - t0)))
-        t0 = time.time()
         img_array = np.stack(img_array)
-        # print('ResNet50 batching in %s costs %s' % (threading.current_thread().name, str(time.time() - t0)))
-        t0 = time.time()
-        # print('ResNet50, doing inference for input of size ', img_array.shape)
         res_array = self.model.predict(img_array, batch_size=self._batch_size)
-        # print('ResNet50 inference in %s costs %s' %(threading.current_thread().name, str(time.time() - t0)))
         res_array = np.argmax(res_array, axis=1)
 
         res_array = list(res_array)
@@ -74,7 +63,6 @@ class ResNet50Servicer(resnet50_pb2_grpc.ResNet50Servicer):
 
         batchers = [ResNet50Server(model_path, queue_size, batch_size, batch_timeout) for _ in range(nbatchers)]
         self._batcher_manager = BatcherManager(threads_names, batchers)
-        print('BatcherManager started ...')
         return
 
       def WhatItIs(self, request, context):
